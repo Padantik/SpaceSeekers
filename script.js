@@ -4,20 +4,21 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
 import $, { grep } from 'jquery';
 
+$(() => {
     //Favicon Load      
         const favicon = document.getElementById('favicon');
         favicon.href = "Favicon/favicon-32x32.png"
 
     //Loading Screen
-    $(window).on('load', () => {
-        setTimeout(removeLoader, 2500);
-    });
+        $(window).on('load', () => {
+           setTimeout(removeLoader, 2500);
+        });
 
-    const removeLoader = () => {
-        $( "#loading-screen" ).fadeOut(750, () => {
-            $( "#loading-screen" ).remove();
-        });  
-    }
+        const removeLoader = () => {
+            $( "#loading-screen" ).fadeOut(750, () => {
+                $( "#loading-screen" ).remove();
+            });  
+        }
 
     // Debug
         //const gui = new dat.GUI()
@@ -65,7 +66,6 @@ import $, { grep } from 'jquery';
         camera.position.z = 2700
         const cameraPole = new THREE.Object3D();
         scene.add(cameraPole);
-        cameraPole.rotation.y = -300
         cameraPole.add(camera);
 
 
@@ -126,14 +126,14 @@ import $, { grep } from 'jquery';
 
             //Distance from the sun value
                 const distanceFromSun = {
-                    mercury: radiusOfEntities.sun + 579,
-                    venus: radiusOfEntities.sun + 1082,
-                    earth: radiusOfEntities.sun + 1496,
-                    mars: radiusOfEntities.sun + 2279,
-                    jupiter: radiusOfEntities.sun + 7786,
-                    saturn: radiusOfEntities.sun + 14335,
-                    uranus: radiusOfEntities.sun + 28725,
-                    neptune: radiusOfEntities.sun + 44951
+                    mercury: (radiusOfEntities.sun / 2) + 579.1,
+                    venus: (radiusOfEntities.sun / 2) + 1082,
+                    earth: (radiusOfEntities.sun / 2) + 1496,
+                    mars: (radiusOfEntities.sun / 2) + 2279,
+                    jupiter: (radiusOfEntities.sun / 2) + 7786,
+                    saturn: (radiusOfEntities.sun / 2) + 14335,
+                    uranus: (radiusOfEntities.sun / 2) + 28725,
+                    neptune: (radiusOfEntities.sun / 2) + 44951
                 }    
                 
             //Orbit Line Path Value
@@ -225,7 +225,7 @@ import $, { grep } from 'jquery';
 
 
             //Create Planet Function
-                const generatePlanet = (name, planetRadius, distanceFromSun, planetUVMap, planetaryOrbitalPath, axialTilt ,rings = false) => {
+                const generatePlanet = (name, planetRadius, distanceFromSun, planetUVMap, planetaryOrbitalPath, axialTilt ,rings = false, ringMap, ringInnerDist, ringOuterDist) => {
                     //Group
                     const planetGroup = new THREE.Group();
                     planetGroup.name = name + "Group"
@@ -238,7 +238,7 @@ import $, { grep } from 'jquery';
                     const planetHoverMesh = new THREE.Mesh(
                         new THREE.SphereGeometry(increaseHoverSizeIfSmall(planetRadius), 100, 100),
                         new THREE.MeshBasicMaterial({
-                            opacity: 0.5,
+                            opacity: 0.35,
                             transparent: true
                         })
                     )
@@ -259,6 +259,28 @@ import $, { grep } from 'jquery';
                     planetMesh.rotation.x = axialTilt        
                     getOrbitalPath(planetaryOrbitalPath)
             
+                    if(rings) {
+                        const texture = new THREE.TextureLoader().load(
+                            ringMap
+                          );
+                          const geometry = new THREE.RingBufferGeometry(planetRadius + ringInnerDist, planetRadius + ringOuterDist, 64);
+                          var pos = geometry.attributes.position;
+                          var v3 = new THREE.Vector3();
+                          for (let i = 0; i < pos.count; i++){
+                           v3.fromBufferAttribute(pos, i);
+                            geometry.attributes.uv.setXY(i, v3.length() < (planetRadius + ringOuterDist) - (planetRadius + ringInnerDist) ? 0 : 1, 1);
+                          }
+                        
+                          const material = new THREE.MeshBasicMaterial({
+                            map: texture,
+                            side: THREE.DoubleSide
+                          });
+                          const planetRingsMesh = new THREE.Mesh(geometry, material);
+                          planetRingsMesh.rotation.x = getRadianFromDegrees(90)
+                        
+                        planetMesh.add(planetRingsMesh)
+
+                    } 
                     const planetData = {
                         group: planetGroup,
                         orbit: planetOrbit,
@@ -268,6 +290,7 @@ import $, { grep } from 'jquery';
                     spacialEntities.push(planetHoverMesh)
                     return planetData;
                 }
+                
 
         //Sun
             const sun = new THREE.Mesh(
@@ -291,7 +314,6 @@ import $, { grep } from 'jquery';
                     planetaryOrbitalPath.mercury,
                     0
                 );              
-
             //Venus
                 const venus = generatePlanet(
                     "Venus",
@@ -339,7 +361,11 @@ import $, { grep } from 'jquery';
                     distanceFromSun.saturn,
                     "img/saturn.jpg",
                     planetaryOrbitalPath.saturn,
-                    getRadianFromDegrees(27)
+                    getRadianFromDegrees(27),
+                    true,
+                    "img/ringsOfSaturn.jpg",
+                    7,
+                    80
                 )              
                     
             //Uranus
@@ -349,7 +375,12 @@ import $, { grep } from 'jquery';
                     distanceFromSun.uranus,
                     "img/uranus.jpg",
                     planetaryOrbitalPath.uranus,
-                    getRadianFromDegrees(98)
+                    getRadianFromDegrees(98),
+                    true,
+                    "img/ringsOfUranus.png",
+                    37,
+                    39
+
                 )
   
             //Neptune
@@ -366,72 +397,84 @@ import $, { grep } from 'jquery';
             const raycaster = new THREE.Raycaster();
             const pointer = new THREE.Vector2();
 
-            let display = document.getElementById("PlanetName")
-            const displayName = (name) => {
-                display.innerHTML = name
+           
+            const getPlanetInfomation = (name, object) => {
+                for(let planet = 0; planet < spacialEntities.length; planet++) {
+                    spacialEntities[planet].material.opacity = 0.35;
+                }
+                $("#planetName").html(name)
+                $(".planetModal").fadeIn()
+                object.material.opacity = 0.5
+
+                $("#planetInfoHUD i").off().on("click", () => {
+                    $("#planetInfoModal").modal("show")
+                })
+
+                $("#planetExit i").off().on('click', () => {               
+                    $(".planetModal").fadeOut()
+                    console.log(object)                  
+                    object.material.opacity = 0.35
+                });
             }
 
-            const onPointerMove = ( event ) => {
+            const getPlanet = ( event ) => {
             
                 pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
                 pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
     
                 raycaster.setFromCamera( pointer, camera );
     
-                    let intersects = raycaster.intersectObjects(spacialEntities);
-                    if ( intersects.length > 0 ) {
+                let intersects = raycaster.intersectObjects(spacialEntities);
+                if ( intersects.length > 0 ) {
+                    
+                    const res = intersects.filter(( res ) => {
                         
-                        const res = intersects.filter(( res ) => {
-                            
-                            return res.object;
-                            
-                        } )[ 0 ];
-                        let planetName = res.object.children[0].name
-                        switch(planetName) {
-                            case "Mercury":                              
-                                displayName(planetName)
-                                break
-                            case "Venus":                                           
-                                displayName(planetName)
-                                break                          
-                            case "Earth":                                           
-                            displayName(planetName)
-                            break                            
-                            case "Mars":                                           
-                                displayName(planetName)
-                                break                                
-                            case "Jupiter":                                           
-                            displayName(planetName)
-                            break                         
-                            case "Saturn":                                           
-                                displayName(planetName)
-                                break
-                            case "Uranus":                                           
-                            displayName(planetName)
+                        return res.object;
+                        
+                    } )[ 0 ];
+                    let planetName = res.object.children[0].name
+                    switch(planetName) {
+                        case "Mercury":                              
+                            getPlanetInfomation(planetName, res.object)
+                            break
+                        case "Venus":                                           
+                            getPlanetInfomation(planetName, res.object)
                             break                          
-                           case "Neptune":                                           
-                                displayName(planetName)
-                                break
-                            
-                        }
-    
-                    }
-    
+                        case "Earth":                                           
+                            getPlanetInfomation(planetName, res.object)
+                            break                            
+                        case "Mars":                                           
+                            getPlanetInfomation(planetName, res.object)
+                            break                                
+                        case "Jupiter":                                           
+                            getPlanetInfomation(planetName, res.object)
+                            break                         
+                        case "Saturn":                                           
+                            getPlanetInfomation(planetName, res.object)
+                            break
+                        case "Uranus":                                           
+                            getPlanetInfomation(planetName, res.object)
+                            break                          
+                        case "Neptune":                                           
+                            getPlanetInfomation(planetName, res.object)
+                            break                         
+                    }  
+                }
             }
-            
 
         //Planet Movement Functions
-            const planetOrbit = () => {
-                mercury.orbit.rotation.y +=0.0004736
-                venus.orbit.rotation.y +=0.0003502
-                earth.orbit.rotation.y += 0.0002978
-                mars.orbit.rotation.y += 0.00024077
-                jupiter.orbit.rotation.y += 0.0001307
-                saturn.orbit.rotation.y += 0.0000969
-                uranus.orbit.rotation.y += 0.0000681
-                neptune.orbit.rotation.y += 0.0000543
+            //Orbit
+            const planetOrbit = (time) => {
+                mercury.orbit.rotation.y +=0.0004736 * time
+                venus.orbit.rotation.y +=0.0003502 * time
+                earth.orbit.rotation.y += 0.0002978 * time
+                mars.orbit.rotation.y += 0.00024077 * time
+                jupiter.orbit.rotation.y += 0.0001307 * time
+                saturn.orbit.rotation.y += 0.0000969 * time
+                uranus.orbit.rotation.y += 0.0000681 * time
+                neptune.orbit.rotation.y += 0.0000543 * time
             }
-            
+            //Spin
             const planetSpin = () => {
                 sun.rotation.y += 0.0006975
                 mercury.planet.rotation.y += 0.0001083
@@ -448,16 +491,14 @@ import $, { grep } from 'jquery';
         const animate = (time) => {
 
             //cameraPole.rotation.y += 0.001;
+            planetOrbit(1);
             planetSpin()
-            planetOrbit();
             controls.update()
             renderer.render(scene, camera);
 
             requestAnimationFrame(animate);
-            document.addEventListener( 'click', onPointerMove );
         }
-        
         requestAnimationFrame(animate);
+        $(renderer.domElement.parentElement).on("click", (event) => getPlanet(event));
 
-
-
+    })
