@@ -3,8 +3,6 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
 import $, { grep } from 'jquery';
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { TorusGeometry } from 'three';
 
 
 
@@ -27,6 +25,7 @@ $(() => {
                             setTimeout(() => {
                                 start();
                                 resetCamera()
+                                $(".speedSettings").css("display", "grid")
                             }, 500)           
                         })
                     }, 2500)
@@ -179,7 +178,7 @@ $(() => {
 
 
             //Create Planet Function
-                const generatePlanet = (planet, UVmaps, rings = false) => {
+                const generatePlanet = (planet, rings = false) => {
                     let noNumbersInName = planet.englishName
                     noNumbersInName = noNumbersInName.replace(/[0-9]/g, '');
                    //Group
@@ -236,15 +235,17 @@ $(() => {
                         planetMesh.add(planetRingsMesh)
 
                     } 
+                    spacialEntities.push(planetHoverMesh)
                     const planetData = {
                         group: planetGroup,
                         orbit: planetOrbit,
                         hover: planetHoverMesh,
-                        planet: planetMesh
+                        planet: planetMesh,
                     }
-                    spacialEntities.push(planetHoverMesh)
-                    return planetData;
+                    return planetData, spacialEntities
                 }
+        
+
 
         //Sun
             const sun = new THREE.Mesh(
@@ -257,34 +258,6 @@ $(() => {
             sun.name = sunData.name
             SoyMilkyWay.add(sun)  
    
-        //Planets
-            //Planet Movement
-                //Orbit
-                /*
-                const planetOrbit = (time) => {
-                    mercury.orbit.rotation.y +=0.0004736 * time
-                    venus.orbit.rotation.y +=0.0003502 * time
-                    earth.orbit.rotation.y += 0.0002978 * time
-                    mars.orbit.rotation.y += 0.00024077 * time
-                    jupiter.orbit.rotation.y += 0.0001307 * time
-                    saturn.orbit.rotation.y += 0.0000969 * time
-                    uranus.orbit.rotation.y += 0.0000681 * time
-                    neptune.orbit.rotation.y += 0.0000543 * time
-                }
-                
-                //Spin
-                const planetSpin = () => {
-                    sun.rotation.y += 0.0006975
-                    mercury.planet.rotation.y += 0.0001083
-                    venus.planet.rotation.y += 0.0000652
-                    earth.planet.rotation.y += 0.01674
-                    mars.planet.rotation.y += 0.00866
-                    jupiter.planet.rotation.y += 0.45583
-                    saturn.planet.rotation.y += 0.36840
-                    uranus.planet.rotation.y += 0.14794
-                    neptune.planet.rotation.y += 0.09719
-                }   
-*/
             
             //Planet Interaction               
                 //For Interactivity
@@ -330,6 +303,7 @@ $(() => {
                     });
                 }
 
+
     //API GENERATED PLANETS 
         const UVmaps = {
             "Mercury": "img/mercury.jpg",
@@ -347,6 +321,12 @@ $(() => {
             " Eris": "img/eris.jpg"
         }
 
+        let planets;
+        let planetSpeeds = []
+        let orbitSpeedinKMpS = []
+        let rotationSpeedInKMpS = [];
+
+
         const getAllPlanets = () => {
             fetch(`https://api.le-systeme-solaire.net/rest/bodies/`, {
                 method: "GET",
@@ -355,22 +335,62 @@ $(() => {
                 }
             }).then(response => response.json())
             .then(result => {
+                
                 result.bodies.forEach(planet => {
                     if(planet.isPlanet) {
-                        generatePlanet(planet, UVmaps)
+                        planets = planet
+                        generatePlanet(planet)
+                        planetSpeeds.push([planet.englishName.replace(/[0-9]/g, ''), planet.sideralOrbit, planet.sideralRotation])
                     }
                 })
+                let orbitSpeed;
+                let rotation;
+                
                 spacialEntities.forEach(entity => {
-                    let planetName = entity.children[0].name;
-                    Object.entries(UVmaps).forEach(map => {
-                        if(map[0] == planetName) {
-                            entity.children[0].material.map = new THREE.TextureLoader().load(map[1])
+                    planetSpeeds.forEach(planetSpeed => {
+                        if(planetSpeed[0] == entity.children[0].name) {
+                            orbitSpeed = planetSpeed[1]
+                            rotation = planetSpeed[2]
                         }
-                    }) 
+                    })
+                    //Get Orbit Speed Of Planets
+                        let secondsInAYear = 1 * orbitSpeed * 24 * 60 * 60
+                        let radius = entity.position.x  - (sunData.radius / 2)
+                        let circumferenceOfOrbit = radius * (2 * Math.PI)
+                        
+                        orbitSpeedinKMpS.push([entity.children[0].name ,circumferenceOfOrbit / secondsInAYear])
+                    
+                    //Get Rotation Speed of Planets
+                        let secondsInADay = 1 * rotation * 60 * 60
+                        let circumferenceOfPlanet = entity.children[0].geometry.parameters.radius * 2 * Math.PI
+                        rotationSpeedInKMpS.push([entity.children[0].name ,secondsInADay])
+        
+                    //Get UV Maps
+                        let planetName = entity.children[0].name;
+                        Object.entries(UVmaps).forEach(map => {
+                            if(map[0] == planetName) {
+                                entity.children[0].material.map = new THREE.TextureLoader().load(map[1])
+                            }
+                        }) 
                 })
             })
         }
         getAllPlanets()
+
+                //Orbit
+                const planetOrbit = (time) => {
+                    spacialEntities.forEach(entity => {
+                        orbitSpeedinKMpS.forEach(planetOrb => {
+                            if(entity.children[0].name == planetOrb[0]) {
+                                let speedInKm = planetOrb[1]
+                                entity.parent.rotation.y += speedInKm * time
+                            }
+                        })
+                    })
+                }
+                
+                //Spin
+
 
         //Reset Camera
             const resetCamera = () => {         
@@ -382,12 +402,60 @@ $(() => {
                 camera.position.z += 3500              
                 controls.saveState()
             }
+            
+            const playStates = {
+                play: true,
+                pause: false,
+                forward: false,
+                backward: false,
+                fastForward: false,
+                fastBackward: false
+            }
+            
+            const setPlaySetToFalse = () => {
+                Object.keys(playStates).forEach(state => playStates[state] = false)
+            }
+            
+
+            const changeSpeedSettings = (control) => {
+                let id = $(control)[0].target.id
+                switch(id) {
+                    case "playPause":
+                        if($("#playPause").hasClass("fas fa-pause")) {
+                            setPlaySetToFalse()    
+                            $("#playPause").removeClass("fas fa-pause");
+                            $("#playPause").addClass("fas fa-play");
+                            playStates.pause = true
+                        } else {
+                            setPlaySetToFalse()        
+                            $("#playPause").removeClass("fas fa-play");
+                            $("#playPause").addClass("fas fa-pause");
+                            playStates.play = true
+                        }
+                        break;
+                    case "forward":
+                        setPlaySetToFalse()
+                        playStates.forward = true
+                        break;
+                    case "fastForward":
+                        setPlaySetToFalse()
+                        playStates.fastForward = true
+                        break;
+                    case "back":
+                        setPlaySetToFalse()
+                        playStates.backward = true
+                        break
+                    case "fastBack":
+                        setPlaySetToFalse()
+                        playStates.fastBackward = true
+                }
+            }
+
+            $(".speedSettingsControls i").on("click", (target) => changeSpeedSettings(target));
 
 
         //Starting Scene
             const animate = (time) => {
-                //planetOrbit(1)
-                //planetSpin()
                 cameraPole.rotation.y -= 0.00125;
                 renderer.render(scene, camera);
                 
@@ -399,23 +467,41 @@ $(() => {
 
         //GameScreen
             const start = () => {
+
                 controls.enablePan = true;
                 spacialEntities.forEach((entity) => {
                     entity.material.opacity = 0.25
                 })
                 setTimeout(() => {
                     $("#cameraReset").fadeIn()
-                }, 10000)
+                }, 100)
                 $("#cameraReset").on("click", () => {
                     controls.reset();
                     $(".HUD").hide()
                 })
             // Controls
                 const animate = (time) => {
-                    //planetOrbit(1);
-                    //planetSpin()
                     controls.update()
                     cameraPole.rotation.y = 0;
+                    
+                   if(playStates.play) {
+                       planetOrbit(1)
+                   }
+                   if(playStates.pause) {
+                       planetOrbit(0)
+                   }
+                   if(playStates.forward) {
+                       planetOrbit(25)
+                   }
+                   if(playStates.backward) {
+                       planetOrbit(-25)
+                   } 
+                   if(playStates.fastForward) {
+                       planetOrbit(50)
+                   }
+                   if(playStates.fastBackward) {
+                       planetOrbit(-50)
+                   } 
 
                     renderer.render(scene, camera);
                     requestAnimationFrame(animate);
@@ -423,7 +509,4 @@ $(() => {
                 requestAnimationFrame(animate);
                 $(renderer.domElement.parentElement).on("click", (event) => getPlanet(event));
             }
-
-            start();
-            resetCamera()
     })
