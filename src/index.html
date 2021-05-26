@@ -19,6 +19,7 @@
         <div id="loader"></div>
     </section>
         <div class="welcomeTitle">
+            <h1 id="gameTitle">Solar Seekers</h1>
             <div class="secondMsg">
                 <h2>Loading planet data<span>.</span><span>.</span><span>.</span></h2>
             </div>
@@ -27,20 +28,27 @@
             </div>
         </div>
     
-
+<div>
     <div class="HUD" id="planetModalNameDisplay">
         <h3 id="planetName"></h3>
+        <div class="infoModal">
+            
+        </div>
     </div>
     <div class="HUD" id="planetInfoHUD">
-        <i class="fas fa-info-circle"></i>
+        <i id="getInfo" class="fas fa-search"></i>
+        <i id="closePlanetHUD" class="fas fa-minus-circle"></i>
     </div>
-    <div class="HUD" id="planetExit">
-        <i class="fas fa-times-circle"></i>
+    
+    <div id="closeHUD">
+        <i id="hideHUD" class="fas fa-chevron-down rotate" title="Hide HUD"></i>
     </div>
-    <div id="cameraReset">
-        <i class="fas fa-sync"></i> 
+    
+    <div class="cameraReset">
+        <i id="cameraReset" class="fas fa-camera" title="Reset Camera"></i>
+        <i id="planetReset" class="fas fa-sync" title="Reset Planets"></i>
     </div>
-
+    
     <div class="speedSettings">
         <div class="speedSettingsControls">
             <i id="fastBack" class="fas fa-fast-backward"></i>
@@ -50,6 +58,7 @@
             <i id="fastForward" class="fas fa-fast-forward"></i>
         </div>
     </div>
-
+</div>
+    
 </body>
 </html>
