@@ -18,47 +18,105 @@
     <section id="loading-screen">
         <div id="loader"></div>
     </section>
-        <div class="welcomeTitle">
-            <h1 id="gameTitle">Solar Seekers</h1>
-            <div class="secondMsg">
-                <h2>Loading planet data<span>.</span><span>.</span><span>.</span></h2>
+    
+    <div class="welcomeTitle">
+        <h1 id="gameTitle">Space Seekers</h1>
+        <div class="secondMsg">
+            <h2>Loading planet data<span>.</span><span>.</span><span>.</span></h2>
+        </div>
+        <div class="thirdMsg">
+            <h2>Click here to start</h2>
+        </div>
+    </div>
+    
+    <div>
+        <div class="HUD" id="planetModalNameDisplay">
+            <h3 id="planetName"></h3>
+            <div class="infoModal">
+            <i id="closePlanetHUD" class="fas fa-times-circle"></i>
+            <table>         
+                <tbody id="displayDataTable">
+                    <tr>
+                        <th>Moons</th>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td></td>
+                    </tr>    
+                    <tr>
+                        <th>Escape Velocity</th>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
             </div>
-            <div class="thirdMsg">
-                <h2>Click here to start</h2>
+            <div id="planetInfoHUD">
+                <i id="getInfo" class="fas fa-search"></i>
+                <i id="compareToEarth" class="fas fa-globe-europe"></i>
             </div>
         </div>
-    
-<div>
-    <div class="HUD" id="planetModalNameDisplay">
-        <h3 id="planetName"></h3>
-        <div class="infoModal">
-            
+        
+        <div id="closeHUD">
+            <i id="hideHUD" class="fas fa-chevron-down rotate" title="Hide HUD"></i>
+        </div>
+        
+        <div class="resetMenu">
+            <i class="fas fa-bars" id="resetMenu"></i>
+            <div class="resetMenu-content">
+                <i id="cameraReset" class="fas fa-camera" title="Reset Camera"></i>
+                <i id="planetReset" class="fas fa-sync" title="Reset Planets"></i>
+            </div>
+        </div>
+        
+        <div class="speedSettings">
+            <div class="speedSettingsControls">
+                <i id="fastBack" class="fas fa-fast-backward"></i>
+                <i id="back" class="fas fa-backward"></i>
+                <i id="playPause" class="fas fa-pause"></i>
+                <i id="forward" class="fas fa-forward"></i>
+                <i id="fastForward" class="fas fa-fast-forward"></i>
+            </div>
         </div>
     </div>
-    <div class="HUD" id="planetInfoHUD">
-        <i id="getInfo" class="fas fa-search"></i>
-        <i id="closePlanetHUD" class="fas fa-minus-circle"></i>
-    </div>
-    
-    <div id="closeHUD">
-        <i id="hideHUD" class="fas fa-chevron-down rotate" title="Hide HUD"></i>
-    </div>
-    
-    <div class="cameraReset">
-        <i id="cameraReset" class="fas fa-camera" title="Reset Camera"></i>
-        <i id="planetReset" class="fas fa-sync" title="Reset Planets"></i>
-    </div>
-    
-    <div class="speedSettings">
-        <div class="speedSettingsControls">
-            <i id="fastBack" class="fas fa-fast-backward"></i>
-            <i id="back" class="fas fa-backward"></i>
-            <i id="playPause" class="fas fa-pause"></i>
-            <i id="forward" class="fas fa-forward"></i>
-            <i id="fastForward" class="fas fa-fast-forward"></i>
-        </div>
-    </div>
-</div>
-    
+
+
+
 </body>
 </html>
